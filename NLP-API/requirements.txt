@@ -1,6 +1,5 @@
 flask
 nltk
 sentence-transformers
-torch
 numpy
 rapidfuzz
