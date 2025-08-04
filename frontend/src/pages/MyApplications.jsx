@@ -32,15 +32,12 @@ export default function MyApplications() {
       }
 
       try {
-        const res = await fetch(
-          `https://rizeos-backend-o22d.onrender.com/api/applications/${user.id}`
-        );
+        const res = await fetch(`https://rizeos-backend-o22d.onrender.com/api/applications/${user.id}`);
         const data = await res.json();
 
         if (!res.ok) {
           setError(data.msg || "Failed to fetch applications");
         } else {
-          console.log("🟢 Applications received from backend:", data);
           setApplications(data);
         }
       } catch (err) {
@@ -59,9 +56,7 @@ export default function MyApplications() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 via-white to-indigo-100 py-10 px-4">
       <div className="max-w-4xl mx-auto bg-white shadow-xl rounded-2xl p-8">
-        <h1 className="text-2xl font-bold text-gray-800 mb-6">
-          📝 My Applications
-        </h1>
+        <h1 className="text-2xl font-bold text-gray-800 mb-6">📝 My Applications</h1>
 
         {loading ? (
           <p className="text-center text-gray-500">Loading...</p>
@@ -78,13 +73,9 @@ export default function MyApplications() {
                 key={job._id}
                 className="p-5 border border-gray-200 rounded-lg shadow-sm bg-white hover:shadow-md transition"
               >
-                <h2 className="font-semibold text-lg text-blue-800">
-                  {job.title}
-                </h2>
+                <h2 className="font-semibold text-lg text-blue-800">{job.title}</h2>
                 <p className="text-sm text-gray-700">{job.company}</p>
-                {job.location && (
-                  <p className="text-xs text-gray-500">{job.location}</p>
-                )}
+                <p className="text-xs text-gray-500">{job.location || "Location not specified"}</p>
               </li>
             ))}
           </ul>

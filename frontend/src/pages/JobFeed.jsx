@@ -10,18 +10,15 @@ export default function JobFeed() {
   const [errorMap, setErrorMap] = useState({});
   const [loading, setLoading] = useState(false);
   const [appliedJobs, setAppliedJobs] = useState([]);
-
   const [filterSkill, setFilterSkill] = useState("");
   const [filterLocation, setFilterLocation] = useState("");
   const [filterTag, setFilterTag] = useState("");
 
   const user = JSON.parse(localStorage.getItem("user"));
-  const storageKey = `appliedJobs_${user?.email}`;
 
   useEffect(() => {
     fetchJobs();
-    const stored = JSON.parse(localStorage.getItem(storageKey)) || [];
-    setAppliedJobs(stored);
+    fetchAppliedJobs();
   }, [aiMode]);
 
   const fetchJobs = async () => {
@@ -34,24 +31,35 @@ export default function JobFeed() {
       const res = await fetch(endpoint);
       const data = await res.json();
 
-      if (aiMode) {
-        const aiJobs = data.map((item) => ({
-          ...item.job,
-          matchScore: item.matchScore,
-        }));
-        setJobs(aiJobs);
-        setFiltered(aiJobs);
-      } else {
-        const allJobs = data.jobs || [];
-        setJobs(allJobs);
-        setFiltered(allJobs);
-      }
+      const jobList = aiMode
+        ? data.map((item) => ({ ...item.job, matchScore: item.matchScore }))
+        : data.jobs || [];
+
+      setJobs(jobList);
+      setFiltered(jobList);
     } catch (err) {
       console.error("Error fetching jobs:", err);
     } finally {
       setLoading(false);
     }
   };
+
+  const fetchAppliedJobs = async () => {
+  if (!user?.id) return;
+  try {
+    const res = await fetch(`https://rizeos-backend-o22d.onrender.com/api/applications/${user.id}`);
+    const data = await res.json();
+    console.log("🔎 Applied jobs raw data:", data); // ✅ Add this
+
+    const appliedIds = data.map((app) => app.jobId);
+    console.log("✅ Extracted jobIds:", appliedIds); // ✅ Add this
+
+    setAppliedJobs(appliedIds);
+  } catch (err) {
+    console.error("Failed to fetch applied jobs:", err);
+  }
+};
+
 
   const applyFilters = () => {
     let result = [...jobs];
@@ -125,7 +133,6 @@ export default function JobFeed() {
     }
 
     if (!user?.id) {
-      console.error("❌ user.id is missing");
       toast.error("User not logged in properly");
       return;
     }
@@ -141,31 +148,27 @@ export default function JobFeed() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.msg || "Application failed");
 
-      const updated = [...appliedJobs, jobId];
-      setAppliedJobs(updated);
-      localStorage.setItem(storageKey, JSON.stringify(updated));
+      if (!res.ok) {
+        if (data.msg === "Already applied.") {
+          setAppliedJobs((prev) => [...prev, jobId]);
+        }
+        throw new Error(data.msg || "Application failed");
+      }
 
-      toast.success(`📩 Application submitted for "${jobTitle}"`, {
-        duration: 3500,
-        position: "top-right",
-      });
+      setAppliedJobs((prev) => [...prev, jobId]);
+      toast.success(`📩 Application submitted for "${jobTitle}"`);
     } catch (err) {
       console.error("❌ Apply error:", err);
-      toast.error("Application failed");
+      toast.error(err.message || "Application failed");
     }
   };
 
   return (
     <div className="max-w-6xl mx-auto p-6">
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          style: { marginTop: "4rem" }, // ✅ adds space below navbar
-        }}
-      />
+      <Toaster position="top-right" toastOptions={{ style: { marginTop: "4rem" } }} />
 
+      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-3xl font-bold text-[#1E3A8A]">
           {aiMode ? "🤖 AI-Recommended Jobs" : "🔍 Explore Job Feed"}
@@ -181,9 +184,7 @@ export default function JobFeed() {
       {/* Filters */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6 items-end">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Skill
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Skill</label>
           <input
             type="text"
             placeholder="e.g., React"
@@ -193,9 +194,7 @@ export default function JobFeed() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Location
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
           <input
             type="text"
             placeholder="e.g., Delhi"
@@ -205,9 +204,7 @@ export default function JobFeed() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Tag
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Tag</label>
           <input
             type="text"
             placeholder="e.g., Internship"
@@ -230,7 +227,7 @@ export default function JobFeed() {
         </button>
       </div>
 
-      {/* Scrollable Job List */}
+      {/* Job Feed */}
       <div className="border rounded-lg p-4 shadow-md bg-gray-50 h-[600px] overflow-y-auto">
         {loading ? (
           <p className="text-center text-gray-500">Loading jobs...</p>
@@ -244,9 +241,7 @@ export default function JobFeed() {
                 className="border border-gray-200 rounded p-5 shadow-sm bg-white transition hover:shadow-lg"
               >
                 <div className="flex justify-between items-start">
-                  <h3 className="text-xl font-semibold text-[#1E40AF]">
-                    {job.title}
-                  </h3>
+                  <h3 className="text-xl font-semibold text-[#1E40AF]">{job.title}</h3>
                   {aiMode && idx === 0 && (
                     <span className="inline-block px-3 py-1 rounded-md text-sm font-semibold text-white bg-gradient-to-r from-purple-600 to-pink-500 shadow">
                       🌟 Top Match
@@ -269,8 +264,7 @@ export default function JobFeed() {
                 <div className="mt-4 flex gap-4 flex-wrap">
                   {aiMode ? (
                     <p className="text-sm font-medium text-purple-600">
-                      🤝 Match Score:{" "}
-                      <span className="text-black">{job.matchScore}</span>
+                      🤝 Match Score: <span className="text-black">{job.matchScore}</span>
                     </p>
                   ) : (
                     <>
@@ -286,15 +280,12 @@ export default function JobFeed() {
                           {errorMap[job._id]}
                         </p>
                       )}
-                      {scoreMap[job._id] !== undefined &&
-                        !loadingMap[job._id] && (
-                          <p className="mt-2 text-sm font-medium text-blue-700">
-                            🔥 Match Score:{" "}
-                            <span className="text-black">
-                              {scoreMap[job._id]}
-                            </span>
-                          </p>
-                        )}
+                      {scoreMap[job._id] !== undefined && !loadingMap[job._id] && (
+                        <p className="mt-2 text-sm font-medium text-blue-700">
+                          🔥 Match Score:{" "}
+                          <span className="text-black">{scoreMap[job._id]}</span>
+                        </p>
+                      )}
                     </>
                   )}
 
