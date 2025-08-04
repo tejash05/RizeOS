@@ -42,8 +42,10 @@ router.get("/:userId", async (req, res) => {
 
     const formatted = applications.map((app) => ({
       _id: app._id,
+      jobId: app.jobId?._id, // ✅ Add jobId for frontend matching
       title: app.jobId?.title || "Deleted Job",
-      company: app.jobId?.location || "Unknown",
+      company: app.jobId?.company || "Unknown",
+      location: app.jobId?.location || "Unknown",
     }));
 
     res.json(formatted);
