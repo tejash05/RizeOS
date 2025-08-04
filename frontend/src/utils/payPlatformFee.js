@@ -4,15 +4,24 @@ export async function payPlatformFee() {
   try {
     if (!window.ethereum) {
       alert("MetaMask not found.");
-      return null;
+      return { success: false, error: "MetaMask not found" };
     }
 
     const provider = new ethers.BrowserProvider(window.ethereum);
     const signer = await provider.getSigner();
-    const walletAddress = await signer.getAddress();
+    const connectedWallet = await signer.getAddress();
 
-    const adminWallet = "0x2bD6A067FAb5603d38c995f1807C92fD836f0336"; // your wallet
-    const amount = "0.001"; // ETH
+    const expectedWallet = localStorage.getItem("wallet");
+    if (
+      expectedWallet &&
+      connectedWallet.toLowerCase() !== expectedWallet.toLowerCase()
+    ) {
+      alert(`⚠️ Please switch to your saved wallet: ${expectedWallet}`);
+      return { success: false, error: "Wallet mismatch" };
+    }
+
+    const adminWallet = "0x2bD6A067FAb5603d38c995f1807C92fD836f0336";
+    const amount = "0.001";
 
     const tx = await signer.sendTransaction({
       to: adminWallet,
@@ -24,13 +33,14 @@ export async function payPlatformFee() {
     console.log("✅ Confirmed:", tx.hash);
 
     return {
+      success: true,
       txHash: tx.hash,
-      wallet: walletAddress,
+      wallet: connectedWallet,
       amount: parseFloat(amount),
     };
   } catch (err) {
     console.error("❌ Payment failed:", err);
     alert("Payment failed or cancelled.");
-    return null;
+    return { success: false, error: err.message || "Unknown error" };
   }
 }
