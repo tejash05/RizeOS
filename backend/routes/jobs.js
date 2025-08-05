@@ -84,11 +84,7 @@ const { createJob } = require("../controllers/jobController");
 const auth = require("../middlewares/authMiddleware");
 const Job = require("../models/Job");
 const User = require("../models/User");
-const OpenAI = require("openai");
-const fetch = require("node-fetch"); // ✅ Required in Node.js < 18
-const { compute_match_score_with_breakdown } = require("../utils/match_score");
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const fetch = require("node-fetch"); // Required in Node.js < 18
 
 /**
  * ✅ Create a new job post
@@ -109,7 +105,7 @@ router.get("/", async (req, res) => {
 });
 
 /**
- * ✅ AI-Powered Feed with Match Score (now batched)
+ * ✅ AI-Powered Feed with Batch Match Score via Flask API
  */
 router.get("/feed", async (req, res) => {
   const { userEmail } = req.query;
@@ -120,32 +116,37 @@ router.get("/feed", async (req, res) => {
     if (!user) return res.status(404).json({ msg: "User not found" });
 
     const jobs = await Job.find();
-    console.log(`📦 Scoring ${jobs.length} jobs for ${user.email} in parallel...`);
+    console.log(`📦 Sending ${jobs.length} jobs for ${user.email} to ML model in batch...`);
 
-    const matchPromises = jobs.map(async (job) => {
-      try {
-        console.log(`🔁 Scoring job ${job._id} (${job.title})`);
+    // Batch input for ML API
+    const batchInput = jobs.map((job) => ({
+      jobDescription: job.description,
+      jobSkills: job.skills || [],
+      candidateBio: user.bio || "",
+      candidateSkills: user.skills || [],
+    }));
 
-        const scoreObj = await compute_match_score_with_breakdown(
-          job.description,
-          job.skills || [],
-          user.bio || "",
-          user.skills || []
-        );
-
-        return {
-          job,
-          matchScore: scoreObj.score || 0,
-        };
-      } catch (err) {
-        console.warn(`⚠️ Failed to compute match for job ${job._id}:`, err.message);
-        return { job, matchScore: 0 };
-      }
+    // Call Flask ML API in one batch
+    const flaskRes = await fetch("https://rizeos-ml-production.up.railway.app/match-score", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(batchInput),
     });
 
-    const results = await Promise.all(matchPromises);
+    const mlResults = await flaskRes.json();
 
-    // Sort by score descending
+    if (!Array.isArray(mlResults)) {
+      console.error("❌ Invalid ML API response:", mlResults);
+      return res.status(500).json({ msg: "Invalid response from ML model" });
+    }
+
+    // Combine job + score
+    const results = jobs.map((job, idx) => ({
+      job,
+      matchScore: mlResults[idx]?.score || 0,
+    }));
+
+    // Sort by score
     results.sort((a, b) => b.matchScore - a.matchScore);
     if (results.length > 0) results[0].recommended = true;
 
