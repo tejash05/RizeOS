@@ -149,11 +149,12 @@ Component	Method
     GitHub: @tejash05
 
 🌐 Deployment Info
-Service	Link
-🖥️ Frontend	rizeos-frontend.onrender.com
-🌐 Backend	rizeos-backend.onrender.com
-🧠 ML API	rizeos-ml-api.up.railway.app
-🧠 How to Run Locally
+| Service       | Link                                                                 |
+|---------------|----------------------------------------------------------------------|
+| 🖥️ Frontend   | [rizeos-frontend.onrender.com](https://rizeos-frontend.onrender.com) |
+| 🌐 Backend    | [rizeos-backend.onrender.com](https://rizeos-backend.onrender.com)   |
+| 🧠 ML API     | [rizeos-ml-api.up.railway.app](https://rizeos-ml-api.up.railway.app) |
+
 
 # 1. Clone repo
 ```
