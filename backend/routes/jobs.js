@@ -5,7 +5,8 @@ const auth = require("../middlewares/authMiddleware");
 const Job = require("../models/Job");
 const User = require("../models/User");
 const OpenAI = require("openai");
-const fetch = require("node-fetch"); // ✅ Required to call external API
+const fetch = require("node-fetch"); // ✅ FIX: Add fetch for Node.js
+const { compute_match_score_with_breakdown } = require("../utils/match_score"); // ✅ Make sure it's imported correctly
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -28,7 +29,7 @@ router.get("/", async (req, res) => {
 });
 
 /**
- * ✅ AI-Powered Feed with Match Score via Flask API
+ * ✅ AI-Powered Feed with Match Score via match_score utils
  */
 router.get("/feed", async (req, res) => {
   const { userEmail } = req.query;
@@ -43,20 +44,16 @@ router.get("/feed", async (req, res) => {
 
     for (const job of jobs) {
       try {
-        const mlRes = await fetch("https://rizeos-ml-production.up.railway.app/match-score", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            jobDescription: job.description,
-            candidateBio: user.bio || "",
-            candidateSkills: (user.skills || []).join(", "),
-          }),
-        });
+        const scoreObj = await compute_match_score_with_breakdown(
+          job.description,
+          job.skills || [],
+          user.bio || "",
+          user.skills || []
+        );
 
-        const data = await mlRes.json();
         results.push({
           job,
-          matchScore: data.score || 0,
+          matchScore: scoreObj.score || 0,
         });
       } catch (err) {
         console.warn(`⚠️ Failed to compute match for job ${job._id}:`, err.message);
@@ -64,7 +61,7 @@ router.get("/feed", async (req, res) => {
       }
     }
 
-    // Sort and mark top match
+    // Sort by match score descending
     results.sort((a, b) => b.matchScore - a.matchScore);
     if (results.length > 0) results[0].recommended = true;
 
