@@ -65,7 +65,7 @@ router.post("/match-score", async (req, res) => {
   }
 
   try {
-    const flaskRes = await axios.post("http://localhost:6000/match-score", {
+    const flaskRes = await axios.post("https://rizeos-ml-production.up.railway.app/match-score", {
       jobDescription,
       jobSkills,
       candidateBio,
