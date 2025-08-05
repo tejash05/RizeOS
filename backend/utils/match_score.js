@@ -1,4 +1,4 @@
-const fetch = require("node-fetch"); // Required for Node.js <18
+const axios = require("axios"); // ✅ Use axios for reliable requests
 
 /**
  * 🔁 Computes AI match score by calling Flask ML API
@@ -16,27 +16,20 @@ async function compute_match_score_with_breakdown(jobDesc, jobSkills, bio, skill
     skills,
   });
 
-  const res = await fetch("https://rizeos-ml-production.up.railway.app/match-score", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
+  try {
+    const response = await axios.post("https://rizeos-ml-production.up.railway.app/match-score", {
       jobDescription: jobDesc,
       jobSkills,
       candidateBio: bio,
       candidateSkills: skills,
-    }),
-  });
+    });
 
-  const data = await res.json();
-
-  if (!res.ok) {
-    console.error("❌ Flask error response:", data);
-    throw new Error(data.msg || "Flask match-score failed");
+    console.log("✅ Flask responded with:", response.data);
+    return response.data;
+  } catch (err) {
+    console.error("❌ Error calling Flask API:", err.response?.data || err.message);
+    throw new Error("Flask match-score failed");
   }
-
-  console.log("✅ Flask responded with:", data);
-
-  return data;
 }
 
 module.exports = {
