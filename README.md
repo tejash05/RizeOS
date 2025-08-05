@@ -83,15 +83,15 @@
 
 | Login | Register | Home |
 |-------|----------|------|
-| ![](readme-assets/login.png) | ![](readme-assets/register.png) | ![](readme-assets/homepage.png) |
+| ![](assets/login.png) | ![](assets/register.png) | ![](assets/homepage.png) |
 
 | Feed (AI + Normal) | Job Post | Edit Profile |
 |--------------------|----------|---------------|
-| ![](readme-assets/feed.png) | ![](readme-assets/jobPost.png) | ![](readme-assets/editprofile.png) |
+| ![](readme/feed.png) | ![](assets/jobPost.png) | ![](assets/editprofile.png) |
 
 | Applications | Payment History | Admin Wallet |
 |-----------------|------------------|---------------|
-| ![](readme-assets/Applications.png) | ![](readme-assets/payment-history.png) | ![](readme-assets/adminWallet.png) |
+| ![](assets/Applications.png) | ![](assets/payment-history.png) | ![](assets/adminWallet.png) |
 
 ---
 
