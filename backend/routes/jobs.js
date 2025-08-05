@@ -84,7 +84,8 @@ const { createJob } = require("../controllers/jobController");
 const auth = require("../middlewares/authMiddleware");
 const Job = require("../models/Job");
 const User = require("../models/User");
-const fetch = require("node-fetch"); // Required in Node.js < 18
+
+// ✅ Node.js v18+ has fetch built-in, no need for node-fetch
 
 /**
  * ✅ Create a new job post
@@ -118,7 +119,7 @@ router.get("/feed", async (req, res) => {
     const jobs = await Job.find();
     console.log(`📦 Sending ${jobs.length} jobs for ${user.email} to ML model in batch...`);
 
-    // Batch input for ML API
+    // 🔁 Prepare batch input for ML API
     const batchInput = jobs.map((job) => ({
       jobDescription: job.description,
       jobSkills: job.skills || [],
@@ -126,7 +127,7 @@ router.get("/feed", async (req, res) => {
       candidateSkills: user.skills || [],
     }));
 
-    // Call Flask ML API in one batch
+    // 🌐 Call ML API (Flask)
     const flaskRes = await fetch("https://rizeos-ml-production.up.railway.app/match-score", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -140,13 +141,13 @@ router.get("/feed", async (req, res) => {
       return res.status(500).json({ msg: "Invalid response from ML model" });
     }
 
-    // Combine job + score
+    // ✅ Combine jobs + scores
     const results = jobs.map((job, idx) => ({
       job,
       matchScore: mlResults[idx]?.score || 0,
     }));
 
-    // Sort by score
+    // 🔽 Sort by score
     results.sort((a, b) => b.matchScore - a.matchScore);
     if (results.length > 0) results[0].recommended = true;
 
