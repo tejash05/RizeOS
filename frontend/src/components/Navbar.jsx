@@ -49,7 +49,7 @@ export default function Navbar() {
   // Global notifications
   useEffect(() => {
     if (!user) return;
-    fetch("https://rizeos-backend-o22d.onrender.com/api/notifications/global")
+    fetch(`${import.meta.env.VITE_BACKEND_URL}/api/notifications/global`)
       .then((res) => res.json())
       .then((data) => {
         const filtered = data.notifications.filter(

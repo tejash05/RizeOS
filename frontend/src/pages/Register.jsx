@@ -12,7 +12,7 @@ export default function Register() {
     skills: "",
     wallet: "",
     email: "",
-    password: ""
+    password: "",
   });
 
   const navigate = useNavigate();
@@ -26,19 +26,19 @@ export default function Register() {
     if (result.success) {
       setForm((prev) => ({ ...prev, wallet: result.address }));
     } else {
-      alert(result.error || "Failed to connect wallet.");
+      alert(result.error || "Failed to connect wallet");
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.wallet) {
-      alert("⚠️ Please connect your MetaMask wallet before registering.");
+      alert("Please connect your MetaMask wallet before registering");
       return;
     }
 
     try {
-      const res = await fetch("https://rizeos-backend-o22d.onrender.com/api/auth/register", {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -56,7 +56,7 @@ export default function Register() {
       navigate("/login");
     } catch (err) {
       console.error(err);
-      alert("Something went wrong!");
+      alert("Something went wrong");
     }
   };
 
@@ -69,11 +69,11 @@ export default function Register() {
             Rize<span className="text-blue-600">OS</span>
           </h1>
           <p className="text-base md:text-lg font-medium text-gray-700 italic mb-3">
-            Empowering your hiring, brilliantly.
+            Empowering your hiring, brilliantly
           </p>
           <p className="text-sm text-gray-500 max-w-sm mx-auto leading-relaxed">
             Whether you're seeking the perfect role or the perfect candidate,
-            RizeOS gives you the edge. Smart. Fast. Secure.
+            RizeOS gives you the edge Smart Fast Secure
           </p>
         </div>
       </div>
@@ -134,7 +134,7 @@ export default function Register() {
 
           {/* Bio */}
           <div>
-            <label className="font-medium text-gray-700 mb-1 block">📝 Bio</label>
+            <label className="font-medium text-gray-700 mb-1 block">Bio</label>
             <textarea
               name="bio"
               placeholder="Short bio..."
@@ -189,7 +189,7 @@ export default function Register() {
               }`}
             >
               {form.wallet
-                ? `✅ ${form.wallet.slice(0, 6)}...${form.wallet.slice(-4)}`
+                ? `${form.wallet.slice(0, 6)}...${form.wallet.slice(-4)}`
                 : "Connect MetaMask Wallet"}
             </button>
             {form.wallet && (

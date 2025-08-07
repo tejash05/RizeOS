@@ -23,9 +23,10 @@ export default function EditProfile() {
       if (!token) return;
 
       try {
-        const res = await fetch("https://rizeos-backend-o22d.onrender.com/api/auth/profile", {
+        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/profile`, {
           headers: { Authorization: `Bearer ${token}` },
         });
+
         const data = await res.json();
 
         if (res.ok) {
@@ -42,7 +43,7 @@ export default function EditProfile() {
           });
         }
       } catch (err) {
-        console.error("Failed to fetch profile:", err);
+        console.error("Failed to fetch profile", err);
         toast.error("❌ Failed to fetch profile");
       }
     };
@@ -65,9 +66,9 @@ export default function EditProfile() {
       const updatedForm = { ...form, wallet: result.address };
       setForm(updatedForm);
       localStorage.setItem("wallet", result.address);
-      toast.success("🔗 Wallet connected!");
+      toast.success("Wallet connected");
     } else {
-      toast.error(result?.error || "❌ Failed to connect wallet.");
+      toast.error(result?.error || "Failed to connect wallet");
     }
   };
 
@@ -77,19 +78,19 @@ export default function EditProfile() {
     if (!activeResume && form.resume) {
       try {
         const resFile = await fetch(
-          `https://rizeos-backend-o22d.onrender.com/uploads/${form.resume}`
+          `${import.meta.env.VITE_BACKEND_URL}/uploads/${form.resume}`
         );
         const blob = await resFile.blob();
         activeResume = new File([blob], form.resume, { type: blob.type });
         setResume(activeResume);
       } catch (err) {
-        toast.error("⚠️ Failed to load uploaded resume. Please re-upload.");
+        toast.error("Failed to load uploaded resume Please re-upload");
         return;
       }
     }
 
     if (!activeResume) {
-      toast.error("📄 Please upload or select a resume first.");
+      toast.error("Please upload or select a resume first");
       return;
     }
 
@@ -97,22 +98,22 @@ export default function EditProfile() {
     formData.append("resume", activeResume);
 
     try {
-      const res = await fetch("https://rizeos-backend-o22d.onrender.com/api/ai/extract-skills", {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/ai/extract-skills`, {
         method: "POST",
         body: formData,
       });
 
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data.msg || "Skill extraction failed.");
+        toast.error(data.msg || "Skill extraction failed");
         return;
       }
 
       setForm((prev) => ({ ...prev, skills: data.skills }));
-      toast.success("🧠 Skills extracted successfully!");
+      toast.success("Skills extracted successfully");
     } catch (err) {
-      console.error("Skill extraction error:", err);
-      toast.error("Something went wrong during skill extraction.");
+      console.error("Skill extraction error", err);
+      toast.error("Something went wrong during skill extraction");
     }
   };
 
@@ -127,7 +128,7 @@ export default function EditProfile() {
       }
       if (resume) formData.append("resume", resume);
 
-      const res = await fetch("https://rizeos-backend-o22d.onrender.com/api/auth/profile", {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/profile`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
@@ -135,32 +136,30 @@ export default function EditProfile() {
 
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data.msg || "❌ Failed to update profile.");
+        toast.error(data.msg || "Failed to update profile");
         return;
       }
 
-      toast.success("Profile updated successfully!");
+      toast.success("Profile updated successfully");
+
+      // save updated user to localStorage for JobFeed etc
       localStorage.setItem("user", JSON.stringify(data));
       localStorage.setItem("wallet", data.wallet || "");
+
       setForm((prev) => ({ ...prev, resume: data.resume }));
       setResume(null);
     } catch (err) {
-      console.error("Update error:", err);
-      toast.error("Something went wrong while updating profile.");
+      console.error("Update error", err);
+      toast.error("Something went wrong while updating profile");
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-white to-purple-100 px-4 py-10">
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          style: { marginTop: "4rem" },
-        }}
-      />
+      <Toaster position="top-right" toastOptions={{ style: { marginTop: "4rem" } }} />
       <div className="w-full max-w-2xl bg-white/80 backdrop-blur-md shadow-2xl border border-gray-200 rounded-2xl p-8 sm:p-10">
         <h2 className="text-3xl font-extrabold text-center text-gray-800 mb-8 tracking-tight">
-          🧑‍💼 Edit Profile
+          Edit Profile
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-6 text-sm">
@@ -190,9 +189,7 @@ export default function EditProfile() {
 
           {/* LinkedIn */}
           <div>
-            <label className="block mb-1 font-medium text-gray-700">
-              LinkedIn URL
-            </label>
+            <label className="block mb-1 font-medium text-gray-700">LinkedIn URL</label>
             <input
               name="linkedin"
               type="url"
@@ -218,9 +215,7 @@ export default function EditProfile() {
 
           {/* Wallet Address */}
           <div>
-            <label className="block mb-1 font-medium text-gray-700">
-              Wallet Address
-            </label>
+            <label className="block mb-1 font-medium text-gray-700">Wallet Address</label>
             {form.wallet ? (
               <div className="relative">
                 <input
@@ -244,7 +239,7 @@ export default function EditProfile() {
                 onClick={handleWalletConnect}
                 className="w-full bg-yellow-500 hover:bg-yellow-600 text-white py-2 rounded-lg font-medium shadow-md transition-all"
               >
-                🔗 Connect Wallet
+                Connect Wallet
               </button>
             )}
           </div>
@@ -257,12 +252,12 @@ export default function EditProfile() {
             {form.resume ? (
               <div className="flex flex-col gap-2 text-sm">
                 <a
-                  href={`https://rizeos-backend-o22d.onrender.com/uploads/${form.resume}`}
+                  href={`${import.meta.env.VITE_BACKEND_URL}/uploads/${form.resume}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-600 underline"
                 >
-                  📄 View Uploaded Resume
+                  View Uploaded Resume
                 </a>
                 <button
                   type="button"
@@ -272,7 +267,7 @@ export default function EditProfile() {
                   }}
                   className="text-red-600 underline text-xs"
                 >
-                  ❌ Remove Resume
+                  Remove Resume
                 </button>
               </div>
             ) : (
@@ -293,7 +288,7 @@ export default function EditProfile() {
                   : "bg-gray-400 cursor-not-allowed"
               }`}
             >
-              🧠 Extract Skills from Resume
+              Extract Skills from Resume
             </button>
           </div>
 
@@ -302,7 +297,7 @@ export default function EditProfile() {
             type="submit"
             className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-lg font-semibold shadow-md transition-all"
           >
-            💾 Save Profile
+            Save Profile
           </button>
         </form>
       </div>

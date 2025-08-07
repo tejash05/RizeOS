@@ -16,7 +16,7 @@ export default function PaymentsPage() {
           return;
         }
 
-        const res = await fetch("https://rizeos-backend-o22d.onrender.com/api/payments/my", {
+        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/payments/my`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -37,13 +37,13 @@ export default function PaymentsPage() {
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
       <h2 className="text-3xl font-bold text-center text-[#1E3A8A] mb-8">
-        💰 Payment History
+        Payment History
       </h2>
 
       {loading ? (
         <p className="text-center text-gray-500">Loading payments...</p>
       ) : payments.length === 0 ? (
-        <p className="text-center text-gray-500">No payment records found.</p>
+        <p className="text-center text-gray-500">No payment records found</p>
       ) : (
         <div className="bg-white shadow border rounded-lg overflow-hidden">
           <div className="grid grid-cols-6 bg-gray-100 text-sm font-semibold text-gray-700 px-4 py-3">

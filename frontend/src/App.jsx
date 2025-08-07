@@ -8,6 +8,7 @@ import JobFeed from "./pages/JobFeed";
 import EditProfile from "./pages/EditProfile";
 import PaymentsPage from "./pages/PaymentsPage";
 import MyApplications from "./pages/MyApplications";
+import PrivateRoute from "./utils/PrivateRoute";
 
 function AppWrapper() {
   const location = useLocation();
@@ -23,15 +24,15 @@ function AppWrapper() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        {/* Main */}
-        <Route path="/home" element={<Home />} />
-        <Route path="/jobs" element={<JobFeed />} />
-        <Route path="/post-job" element={<JobPostForm />} />
-        <Route path="/edit-profile" element={<EditProfile />} />
-        <Route path="/payments" element={<PaymentsPage />} />
-        <Route path="/applications" element={<MyApplications />} />
+        {/* Protected Main Routes */}
+        <Route path="/home" element={<PrivateRoute><Home /></PrivateRoute>} />
+        <Route path="/jobs" element={<PrivateRoute><JobFeed /></PrivateRoute>} />
+        <Route path="/post-job" element={<PrivateRoute><JobPostForm /></PrivateRoute>} />
+        <Route path="/edit-profile" element={<PrivateRoute><EditProfile /></PrivateRoute>} />
+        <Route path="/payments" element={<PrivateRoute><PaymentsPage /></PrivateRoute>} />
+        <Route path="/applications" element={<PrivateRoute><MyApplications /></PrivateRoute>} />
 
-        {/* Redirect fallback (optional) */}
+        {/* Fallback redirect */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>

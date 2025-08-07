@@ -41,12 +41,13 @@ router.get("/:userId", async (req, res) => {
     console.log("🟢 Applications found:", applications.length);
 
     const formatted = applications.map((app) => ({
-      _id: app._id,
-      jobId: app.jobId?._id, // ✅ Add jobId for frontend matching
-      title: app.jobId?.title || "Deleted Job",
-      company: app.jobId?.company || "Unknown",
-      location: app.jobId?.location || "Unknown",
-    }));
+    _id: app._id,
+    jobId: app.jobId?._id,
+    title: app.jobId?.title || "Deleted Job",
+    location: app.jobId?.location || "Unknown",
+    budget: app.jobId?.budget || 0,
+    tags: app.jobId?.tags || [],
+}));
 
     res.json(formatted);
   } catch (err) {

@@ -4,14 +4,14 @@ const pdfParse = require("pdf-parse");
 const mammoth = require("mammoth");
 const OpenAI = require("openai");
 const fs = require("fs");
-const axios = require("axios"); 
+const axios = require("axios");
 
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 /**
- * 📄 Resume Skill Extraction
+ * Extract skills from uploaded resume (PDF or DOCX)
  */
 router.post("/extract-skills", upload.single("resume"), async (req, res) => {
   try {
@@ -32,11 +32,7 @@ router.post("/extract-skills", upload.single("resume"), async (req, res) => {
       return res.status(400).json({ msg: "Unsupported file format" });
     }
 
-    const prompt = `Extract a clean, comma-separated list of professional and technical skills from this resume:
-
-${resumeText}
-
-Just return the skills, nothing else.`;
+    const prompt = `Extract a clean, comma-separated list of professional and technical skills from this resume:\n\n${resumeText}\n\nJust return the skills, nothing else.`;
 
     const gptResponse = await openai.chat.completions.create({
       model: "gpt-4",
@@ -55,7 +51,7 @@ Just return the skills, nothing else.`;
 });
 
 /**
- * 🤖 Match Score via Python Flask API
+ * Get match score from ML API
  */
 router.post("/match-score", async (req, res) => {
   const { jobDescription, jobSkills, candidateBio, candidateSkills } = req.body;
@@ -65,16 +61,16 @@ router.post("/match-score", async (req, res) => {
   }
 
   try {
-    const flaskRes = await axios.post("https://rizeos-ml-production.up.railway.app/match-score", {
+    const flaskRes = await axios.post(`${process.env.ML_API_URL}/match-score`, {
       jobDescription,
       jobSkills,
       candidateBio,
       candidateSkills,
     });
 
-    res.json(flaskRes.data); // full breakdown returned
+    res.json(flaskRes.data); // returns full score breakdown
   } catch (err) {
-    console.error("❌ Flask API error:", err.message);
+    console.error("❌ Match score API error:", err.message);
     res.status(500).json({ msg: "Failed to get match score from ML service" });
   }
 });

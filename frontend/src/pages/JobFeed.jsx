@@ -2,6 +2,17 @@ import React, { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 
 export default function JobFeed() {
+  const [user, setUser] = useState(() => {
+    const stored = localStorage.getItem("user");
+    try {
+      const parsed = JSON.parse(stored);
+      return parsed && parsed._id ? { ...parsed, id: parsed._id } : parsed;
+    } catch {
+      return null;
+    }
+  });
+
+  const [profileLoaded, setProfileLoaded] = useState(false);
   const [jobs, setJobs] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [aiMode, setAiMode] = useState(false);
@@ -14,25 +25,55 @@ export default function JobFeed() {
   const [filterLocation, setFilterLocation] = useState("");
   const [filterTag, setFilterTag] = useState("");
 
-  const user = JSON.parse(localStorage.getItem("user"));
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
   useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        const res = await fetch(`${BACKEND_URL}/api/auth/profile`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        const patched = { ...data, id: data._id };
+        setUser(patched);
+        localStorage.setItem("user", JSON.stringify(patched));
+        setProfileLoaded(true);
+      } catch (err) {
+        console.error("❌ Failed to fetch user profile:", err);
+      }
+    };
+    fetchUserProfile();
+  }, []);
+
+  useEffect(() => {
+    if (!user?.id || !profileLoaded) return;
     fetchJobs();
     fetchAppliedJobs();
-  }, [aiMode]);
+  }, [aiMode, user, profileLoaded]);
 
   const fetchJobs = async () => {
     setLoading(true);
     try {
       const endpoint = aiMode
-        ? `https://rizeos-backend-o22d.onrender.com/api/jobs/feed?userEmail=${user.email}`
-        : `https://rizeos-backend-o22d.onrender.com/api/jobs`;
+        ? `${BACKEND_URL}/api/jobs/feed?userEmail=${user.email}&withScores=true`
+        : `${BACKEND_URL}/api/jobs`; // ✅ fixed to use absolute
 
       const res = await fetch(endpoint);
       const data = await res.json();
 
+      if (!res.ok || !data) {
+        console.error("❌ Failed to fetch jobs:", data?.msg || res.statusText);
+        setJobs([]);
+        setFiltered([]);
+        return;
+      }
+
       const jobList = aiMode
-        ? data.map((item) => ({ ...item.job, matchScore: item.matchScore }))
+        ? Array.isArray(data)
+          ? data.map((item) => ({ ...item.job, matchScore: item.matchScore }))
+          : []
         : data.jobs || [];
 
       setJobs(jobList);
@@ -45,21 +86,15 @@ export default function JobFeed() {
   };
 
   const fetchAppliedJobs = async () => {
-  if (!user?.id) return;
-  try {
-    const res = await fetch(`https://rizeos-backend-o22d.onrender.com/api/applications/${user.id}`);
-    const data = await res.json();
-    console.log("🔎 Applied jobs raw data:", data); // ✅ Add this
-
-    const appliedIds = data.map((app) => app.jobId);
-    console.log("✅ Extracted jobIds:", appliedIds); // ✅ Add this
-
-    setAppliedJobs(appliedIds);
-  } catch (err) {
-    console.error("Failed to fetch applied jobs:", err);
-  }
-};
-
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/applications/${user.id}`);
+      const data = await res.json();
+      const appliedIds = data.map((app) => app.jobId);
+      setAppliedJobs(appliedIds);
+    } catch (err) {
+      console.error("Failed to fetch applied jobs:", err);
+    }
+  };
 
   const applyFilters = () => {
     let result = [...jobs];
@@ -94,15 +129,13 @@ export default function JobFeed() {
 
   const checkMatch = async (jobId, description) => {
     if (!user?.bio && !user?.skills) {
-      alert("Please complete your bio or skills in profile first.");
+      alert("Please complete your bio or skills in profile first");
       return;
     }
-
     setLoadingMap((prev) => ({ ...prev, [jobId]: true }));
     setErrorMap((prev) => ({ ...prev, [jobId]: "" }));
-
     try {
-      const res = await fetch("https://rizeos-backend-o22d.onrender.com/api/ai/match-score", {
+      const res = await fetch(`${BACKEND_URL}/api/ai/match-score`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -111,10 +144,8 @@ export default function JobFeed() {
           candidateSkills: user.skills?.join(", "),
         }),
       });
-
       const data = await res.json();
       if (!res.ok) throw new Error(data.msg || "Failed");
-
       setScoreMap((prev) => ({ ...prev, [jobId]: data.score }));
     } catch (err) {
       setErrorMap((prev) => ({
@@ -131,14 +162,8 @@ export default function JobFeed() {
       toast.error(`Already applied to "${jobTitle}"`);
       return;
     }
-
-    if (!user?.id) {
-      toast.error("User not logged in properly");
-      return;
-    }
-
     try {
-      const res = await fetch("https://rizeos-backend-o22d.onrender.com/api/applications/apply", {
+      const res = await fetch(`${BACKEND_URL}/api/applications/apply`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -146,16 +171,13 @@ export default function JobFeed() {
           jobId,
         }),
       });
-
       const data = await res.json();
-
       if (!res.ok) {
         if (data.msg === "Already applied.") {
           setAppliedJobs((prev) => [...prev, jobId]);
         }
         throw new Error(data.msg || "Application failed");
       }
-
       setAppliedJobs((prev) => [...prev, jobId]);
       toast.success(`📩 Application submitted for "${jobTitle}"`);
     } catch (err) {
@@ -167,8 +189,6 @@ export default function JobFeed() {
   return (
     <div className="max-w-6xl mx-auto p-6">
       <Toaster position="top-right" toastOptions={{ style: { marginTop: "4rem" } }} />
-
-      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-3xl font-bold text-[#1E3A8A]">
           {aiMode ? "🤖 AI-Recommended Jobs" : "🔍 Explore Job Feed"}
@@ -227,7 +247,7 @@ export default function JobFeed() {
         </button>
       </div>
 
-      {/* Job Feed */}
+      {/* Job List */}
       <div className="border rounded-lg p-4 shadow-md bg-gray-50 h-[600px] overflow-y-auto">
         {loading ? (
           <p className="text-center text-gray-500">Loading jobs...</p>
@@ -260,11 +280,11 @@ export default function JobFeed() {
                   {job.tags?.join(", ") || "None"}
                 </p>
                 <p className="text-gray-700">{job.description}</p>
-
                 <div className="mt-4 flex gap-4 flex-wrap">
                   {aiMode ? (
                     <p className="text-sm font-medium text-purple-600">
-                      🤝 Match Score: <span className="text-black">{job.matchScore}</span>
+                      🤝 Match Score:{" "}
+                      <span className="text-black">{job.matchScore}</span>
                     </p>
                   ) : (
                     <>
@@ -276,9 +296,7 @@ export default function JobFeed() {
                         {loadingMap[job._id] ? "Checking..." : "Check Match Score"}
                       </button>
                       {errorMap[job._id] && (
-                        <p className="text-red-600 text-sm mt-2">
-                          {errorMap[job._id]}
-                        </p>
+                        <p className="text-red-600 text-sm mt-2">{errorMap[job._id]}</p>
                       )}
                       {scoreMap[job._id] !== undefined && !loadingMap[job._id] && (
                         <p className="mt-2 text-sm font-medium text-blue-700">
@@ -288,7 +306,6 @@ export default function JobFeed() {
                       )}
                     </>
                   )}
-
                   {appliedJobs.includes(job._id) ? (
                     <span className="bg-green-100 text-green-700 font-medium px-4 py-2 rounded shadow-inner">
                       📝 Application Sent

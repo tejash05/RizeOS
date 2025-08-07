@@ -29,12 +29,12 @@ export default function JobPostForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setPosting(true); // start progress bar
+    setPosting(true);
 
     try {
       const result = await payPlatformFee();
       if (!result?.success) {
-        alert("Payment failed.");
+        alert("Payment failed");
         setPosting(false);
         return;
       }
@@ -45,7 +45,7 @@ export default function JobPostForm() {
         tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
       };
 
-      const res = await fetch("https://rizeos-backend-o22d.onrender.com/api/jobs/create", {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/jobs/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -56,7 +56,7 @@ export default function JobPostForm() {
 
       const data = await res.json();
       if (!res.ok) {
-        alert(data.msg || "❌ Job posting failed");
+        alert(data.msg || "Job posting failed");
         setPosting(false);
         return;
       }
@@ -64,7 +64,7 @@ export default function JobPostForm() {
       const jobId = data.job._id;
       const jobTitle = data.job.title;
 
-      console.log("📤 Logging payment...", {
+      console.log("Logging payment...", {
         jobId,
         jobTitle,
         txHash: result.txHash,
@@ -72,7 +72,7 @@ export default function JobPostForm() {
         amount: result.amount,
       });
 
-      const logRes = await fetch("https://rizeos-backend-o22d.onrender.com/api/payments/log", {
+      const logRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/payments/log`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -88,21 +88,20 @@ export default function JobPostForm() {
       });
 
       const logData = await logRes.json();
-      console.log("✅ Log response:", logData);
+      console.log("Log response:", logData);
 
-      alert("✅ Job posted & payment logged successfully!");
+      alert("Job posted and payment logged successfully");
       navigate("/jobs");
     } catch (err) {
-      console.error("❌ Job post error:", err);
-      alert("Something went wrong while posting the job!");
+      console.error("Job post error:", err);
+      alert("Something went wrong while posting the job");
     } finally {
-      setPosting(false); // end progress bar
+      setPosting(false);
     }
   };
 
   return (
     <div className="relative min-h-screen flex items-center justify-center px-4 overflow-hidden bg-gradient-to-br from-[#e0f7fa] via-white to-[#f3e5f5] animate-gradient-slow">
-      {/* Progress bar */}
       {posting && (
         <div className="fixed top-0 left-0 w-full h-1 z-50">
           <div className="h-full bg-green-500 animate-pulse animate-[pulse_1.2s_linear_infinite]" />
@@ -113,7 +112,7 @@ export default function JobPostForm() {
       <div className="absolute bottom-[-10%] right-[-10%] w-[400px] h-[400px] bg-blue-300 rounded-full opacity-20 blur-3xl z-0" />
       <div className="relative w-full max-w-2xl bg-white/80 backdrop-blur-xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-gray-200 rounded-2xl p-8 sm:p-10 z-10">
         <h2 className="text-3xl font-extrabold text-center text-[#1a237e] mb-8 tracking-tight">
-          🚀 Post a Job
+          Post a Job
         </h2>
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
@@ -138,7 +137,7 @@ export default function JobPostForm() {
             <textarea
               name="description"
               rows="4"
-              placeholder="Describe the responsibilities, requirements..."
+              placeholder="Describe the responsibilities, requirements"
               value={form.description}
               onChange={handleChange}
               className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-sm"
@@ -209,7 +208,7 @@ export default function JobPostForm() {
               posting ? "opacity-70 cursor-wait" : ""
             } bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-lg font-semibold shadow-md hover:scale-[1.01] hover:shadow-lg transition-all`}
           >
-            {posting ? "⏳ Posting..." : "📤 Post Job"}
+            {posting ? "Posting..." : "Post Job"}
           </button>
         </form>
       </div>

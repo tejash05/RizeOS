@@ -19,7 +19,7 @@ export default function Login() {
     e.preventDefault();
 
     try {
-      const res = await fetch("https://rizeos-backend-o22d.onrender.com/api/auth/", {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -42,7 +42,8 @@ export default function Login() {
 
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
-      toast.success("🎉 Login successful!", {
+
+      toast.success("Login successful", {
         duration: 2000,
         style: {
           borderRadius: "8px",
@@ -56,7 +57,7 @@ export default function Login() {
       }, 1500);
     } catch (err) {
       console.error(err);
-      toast.error("Something went wrong!", {
+      toast.error("Something went wrong", {
         style: {
           borderRadius: "8px",
           background: "#fff7ed",
@@ -77,11 +78,11 @@ export default function Login() {
             Rize<span className="text-blue-600">OS</span>
           </h1>
           <p className="text-base md:text-lg font-medium text-gray-700 italic">
-            Empowering your hiring, brilliantly.
+            Empowering your hiring, brilliantly
           </p>
           <p className="text-sm text-gray-500 max-w-sm mx-auto mt-3 leading-relaxed">
-            Welcome back! Access the latest jobs, connect your wallet, and get
-            started with your career journey at RizeOS.
+            Welcome back Access the latest jobs, connect your wallet, and get
+            started with your career journey at RizeOS
           </p>
         </div>
       </div>
@@ -124,7 +125,7 @@ export default function Login() {
             />
           </div>
 
-          {/* Remember me only */}
+          {/* Remember me */}
           <div className="flex items-center justify-between text-sm text-gray-600">
             <label className="flex items-center gap-2">
               <input type="checkbox" className="form-checkbox rounded" />
@@ -143,10 +144,7 @@ export default function Login() {
           {/* Register Link */}
           <p className="text-center text-sm mt-4">
             Don’t have an account?{" "}
-            <Link
-              to="/register"
-              className="text-purple-700 hover:underline font-medium"
-            >
+            <Link to="/register" className="text-purple-700 hover:underline font-medium">
               Sign up
             </Link>
           </p>

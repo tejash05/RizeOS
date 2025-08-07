@@ -10,4 +10,4 @@ RUN pip install --upgrade pip && \
 
 EXPOSE 6000
 
-CMD ["python", "app.py"]
+CMD ["python", "ml_api.py"]
